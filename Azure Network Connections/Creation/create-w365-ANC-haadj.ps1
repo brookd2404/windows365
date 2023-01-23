@@ -80,7 +80,7 @@ Switch ($policyState.HealthCheckStatus) {
         "The Azure Network Connection Created Successfully"
     }
     {$PSItem -notmatch "passed"}{
-        "The Azure Network Connection Creation Failed"
+        throw "The Azure Network Connection Creation Failed"
         "Please Review the error state here: https://endpoint.microsoft.com/`#view/Microsoft_Azure_CloudPC/EditAzureConnectionWizardBlade/connectionId/$($policyState.id)/tabIndexToActive~/0"
     }
 }
