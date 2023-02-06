@@ -1,3 +1,28 @@
+<#
+.SYNOPSIS
+    Creates an Azure Image Builder Template, converts it to a managed disk and uploads it to Windows 365 before Updating the provisioning policy. 
+.DESCRIPTION
+    Creates an Azure Image Builder Template, converts it to a managed disk and uploads it to Windows 365 before Updating the provisioning policy. 
+
+    With the use of Customiser objects it makes it easy to stand up a custom Windows 365 Image in very little time. 
+.EXAMPLE
+    $Params = @{
+        subscriptionID = "b493a1f9-4895-45fe-bb71-152b36eea469"
+        geoLocation = "uksouth"
+        aibRG = "W365-CI-EUC365"
+        imageTemplateName = "w365-vs-template"
+        aibGalleryName = 'elabcigw365'
+        imageDefinitionName = 'w365Images'
+        provisioningPolicyDisplayName = "PSDayUK 2023 Demo"
+        publisher = "MicrosoftWindowsDesktop"
+        offerName = "windows-ent-cpc"
+        offerSku = "win11-22h2-ent-cpc-m365"
+        runOutputName = "w365DistResult" 
+    }
+
+    & '.\Create-Windows365AIB.ps1' @Params
+#>
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)]
