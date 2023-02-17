@@ -187,7 +187,7 @@ $ImgTemplateParams = @{
     Location               = $geoLocation
     UserAssignedIdentityId = $identityNameResourceId
 }
-$aibTemplate = New-AzImageBuilderTemplate @ImgTemplateParams
+New-AzImageBuilderTemplate @ImgTemplateParams | Out-Null
 "AIB Template Created"
 
 $runState = (Get-AzImageBuilderTemplate -ResourceGroupName $aibRG -Name $imageTemplateName).LastRunStatusRunState
