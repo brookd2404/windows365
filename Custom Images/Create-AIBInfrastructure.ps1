@@ -69,7 +69,6 @@ IF (-Not(Get-AzResourceGroup -name $aibRG -ErrorAction SilentlyContinue)) {
 #region Create the AIB User Identity and set Role Permissions
 IF (-Not(Get-AzUserAssignedIdentity -ResourceGroupName $aibRG -Name $identityName -SubscriptionId $subscriptionID -ErrorAction SilentlyContinue)) {
     New-AzUserAssignedIdentity -ResourceGroupName $aibRG -Name $identityName -Location $geoLocation
-    $identityNameResourceId = (Get-AzUserAssignedIdentity -ResourceGroupName $aibRG -Name $identityName).Id
     $identityNamePrincipalId = (Get-AzUserAssignedIdentity -ResourceGroupName $aibRG -Name $identityName).PrincipalId
     "User Managed Identity Created: $identityName"
 }
@@ -93,7 +92,7 @@ IF (-Not(Get-AzRoleDefinition -Name $imageRoleDefName -ErrorAction SilentlyConti
     "Azure Role Definition Created: $imageRoleDefName"
 }
 
-#While the identity does not have the role assigned, try classign it. 
+#While the identity does not have the role assigned, try assign it. 
 while (-not(Get-AzRoleAssignment -RoleDefinitionName $imageRoleDefName -ObjectId $identityNamePrincipalId -Scope "/subscriptions/$subscriptionID/resourceGroups/$aibRG" -ErrorAction SilentlyContinue)) {
     "Assigning Role Assignment to $identityName"
     #Grant the role definition to the AIB Service Principal
