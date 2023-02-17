@@ -156,14 +156,14 @@ $ImgCustomParams03 = @{
     PowerShellCustomizer = $true
     Name                 = 'vsInstall'
     RunElevated          = $false
-    Inline               = @("`$uri = `"https://aka.ms/vs/17/release/vs_community.exe`" 
-`$tempFile = `"`$env:Temp\vsInstall.exe`"
-`$installArgs = `"--add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.Python;includeRecommended --quiet`"
+    Inline               = @('$uri = "https://aka.ms/vs/17/release/vs_community.exe" 
+$tempFile = "$env:Temp\vsInstall.exe"
+$installArgs = "--add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.Python;includeRecommended --quiet"
 
-`$webCli = New-Object System.Net.WebClient;
-`$webCli.DownloadFile(`$uri, `$tempFile)
+$webCli = New-Object System.Net.WebClient;
+$webCli.DownloadFile($uri, $tempFile)
 
-Start-Process -FilePath `$tempFile -ArgumentList `$installArgs -Wait"
+Start-Process -FilePath $tempFile -ArgumentList $installArgs -Wait'
     )
 }
 $Customizer03 = New-AzImageBuilderTemplateCustomizerObject @ImgCustomParams03
@@ -203,7 +203,6 @@ While (($runState -eq "Running") -or ($runState -eq "InProgress"))
 
 
 ###### Convert AIB To Managed Disk, and then to and Image for Windows 365 #######
-
 $latestImgVer = (Get-AzGalleryImageVersion `
         -GalleryImageDefinitionName $imageDefinitionName `
         -GalleryName $aibGalleryName `
