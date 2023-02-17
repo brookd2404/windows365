@@ -49,7 +49,7 @@ FOREACH ($Module in $ModuleNames) {
 }
 
 #Connect to Azure
-Connect-AzAccount
+Connect-AzAccount 
 
 #Check if the current context is the right Subscription
 IF ((-Not((Get-AzContext).Subscription.id -match $subscriptionID))) {
@@ -93,16 +93,17 @@ IF (-Not(Get-AzRoleDefinition -Name $imageRoleDefName -ErrorAction SilentlyConti
     "Azure Role Definition Created: $imageRoleDefName"
 }
 
-#If the identity does not have the role assigned, assign it. 
-IF (-Not(Get-AzRoleAssignment -RoleDefinitionName $imageRoleDefName -ObjectId $identityNamePrincipalId -Scope "/subscriptions/$subscriptionID/resourceGroups/$aibRG" -ErrorAction SilentlyContinue)) {
-    #Wait 60 seconds for the Definition to Create 
+#While the identity does not have the role assigned, try classign it. 
+while (-not(Get-AzRoleAssignment -RoleDefinitionName $imageRoleDefName -ObjectId $identityNamePrincipalId -Scope "/subscriptions/$subscriptionID/resourceGroups/$aibRG" -ErrorAction SilentlyContinue)) {
+    "Assigning Role Assignment to $identityName"
     #Grant the role definition to the AIB Service Principal
     $RoleAssignParams = @{
         ObjectId           = $identityNamePrincipalId
         RoleDefinitionName = $imageRoleDefName
         Scope              = "/subscriptions/$subscriptionID/resourceGroups/$aibRG"
     }
-    New-AzRoleAssignment @RoleAssignParams
-    "Azure Role Definition Assigned"
+    New-AzRoleAssignment @RoleAssignParams -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 10 #Wait 10 seconds before trying again
 }
 #endregion Create the AIB User Identity and set Role Permissions
+
