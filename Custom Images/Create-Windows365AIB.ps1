@@ -132,7 +132,7 @@ $disObjParams = @{
 }
 $disSharedImg = New-AzImageBuilderTemplateDistributorObject @disObjParams
 
-#Add Image Customisations
+#Add Image Customisations (Apps, Directories etc.)
 $ImgCustomParams01 = @{
     PowerShellCustomizer = $true
     Name                 = 'settingUpMgmtAgtPath'
@@ -155,7 +155,8 @@ $Customizer02 = New-AzImageBuilderTemplateCustomizerObject @ImgCustomParams02
 $ImgCustomParams03 = @{
     PowerShellCustomizer = $true
     Name                 = 'vsInstall'
-    RunElevated          = $false
+    RunElevated          = $true
+    RunAsSystem          = $true
     Inline               = @('$uri = "https://aka.ms/vs/17/release/vs_community.exe" 
 $tempFile = "$env:Temp\vsInstall.exe"
 $installArgs = "--add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.Python;includeRecommended --quiet"
@@ -168,7 +169,7 @@ Start-Process -FilePath $tempFile -ArgumentList $installArgs -Wait'
 }
 $Customizer03 = New-AzImageBuilderTemplateCustomizerObject @ImgCustomParams03
 
-
+#If a previous image template exists, remove it.
 IF (Get-AzImageBuilderTemplate -ResourceGroupName $aibRG -ImageTemplateName $imageTemplateName -ErrorAction SilentlyContinue) {
     "Removing AIB Template before creating a new one!"
     Get-AzImageBuilderTemplate -ResourceGroupName $aibRG -ImageTemplateName $imageTemplateName | Remove-AzImageBuilderTemplate
@@ -193,6 +194,7 @@ New-AzImageBuilderTemplate @ImgTemplateParams | Out-Null
 $runState = (Get-AzImageBuilderTemplate -ResourceGroupName $aibRG -Name $imageTemplateName).LastRunStatusRunState
 #Start the Image Building
 Start-AzImageBuilderTemplate -ResourceGroupName $aibRG -Name $imageTemplateName -AsJob
+#While the image is Running or In Progress, wait for 60 seconds and then check again.
 DO {
     "Still Processing AIB Image"
     Start-Sleep 60
@@ -203,6 +205,8 @@ While (($runState -eq "Running") -or ($runState -eq "InProgress"))
 
 
 ###### Convert AIB To Managed Disk, and then to and Image for Windows 365 #######
+
+#Get the latest version of the image from the Gallery
 $latestImgVer = (Get-AzGalleryImageVersion `
         -GalleryImageDefinitionName $imageDefinitionName `
         -GalleryName $aibGalleryName `
@@ -210,31 +214,38 @@ $latestImgVer = (Get-AzGalleryImageVersion `
     | Sort-Object -Descending -Property Name 
 )[0]
  
+#Create the Managed Disk Configuration 
 $diskConfig = New-AzDiskConfig `
     -Location $geoLocation `
     -CreateOption FromImage `
     -GalleryImageReference @{Id = $latestImgVer.Id }
+-HyperVGeneration V2
 
+#Give the disk a name 
 $managedDiskName = "w365OSDisk$($latestImgVer.Name)"
 
+#If the disk exists, remove the disk
 IF (Get-AzDisk -ResourceGroupName $aibRG -DiskName $managedDiskName -ErrorAction SilentlyContinue) {
     Remove-AzDisk -ResourceGroupName $aibRG -DiskName $managedDiskName -Force
 }
-
+#Create the Managed Disk based on the configuration defined
 $managedDisk = New-AzDisk -Disk $diskConfig `
     -ResourceGroupName $aibRG `
     -DiskName $managedDiskName
 
+#Create the OS Managed Disk to be uploaded to Windows 365
 $imageConfig = New-AzImageConfig -Location $geoLocation -HyperVGeneration V2
 $imageConfig = Set-AzImageOsDisk -Image $imageConfig -OsState Generalized -OsType Windows -ManagedDiskId $managedDisk.ID
 
 $outputImageName = "Windows365Image-$($latestImgVer.Name)"
 
+#If the image already exists, remove the image and then create a new one
 IF (Get-AzImage -ResourceGroupName $aibRG -ImageName $outputImageName -ErrorAction SilentlyContinue) {
     Remove-AzImage -ResourceGroupName $aibRG -ImageName $outputImageName -Force
 }
 $imageOutput = New-AzImage -ImageName $outputImageName -ResourceGroupName $aibRG -Image $imageConfig 
 
+#Create upload the created managed disk to Windows 365 using the Graph PowerShell Module
 $customImageParams = @{
     DisplayName           = $imageOutput.Name
     Version               = $latestImgVer.Name
@@ -242,12 +253,16 @@ $customImageParams = @{
 }
 $w365ImageUpload = New-MgDeviceManagementVirtualEndpointDeviceImage @customImageParams
 
+#While the image is still uploading, loop to ensure the rest of the script can succeed
 while ((Get-MgDeviceManagementVirtualEndpointDeviceImage -CloudPcDeviceImageId $w365ImageUpload.id).Status -notmatch "ready") {
     "$($w365ImageUpload.DisplayName) upload is still in-progress"
     Start-Sleep -Seconds 60
 }
 
+#Check if there is a policy with the same name, if so set it to the variable
 $currentProPolicy = Get-MgDeviceManagementVirtualEndpointProvisioningPolicy -Property DisplayName, Id | Where-Object DisplayName -eq $provisioningPolicyDisplayName
+
+#If the policy exists, update the policy, otherwise create a new provisioning policy. 
 IF ($currentProPolicy) {
     $params = @{
         ImageId          = $w365ImageUpload.id
@@ -265,6 +280,7 @@ ELSE {
         ImageId                 = $w365ImageUpload.id
         ImageDisplayName        = $w365ImageUpload.DisplayName
         ImageType               = "custom"
+        EnableSingleSignOn      = $true
         MicrosoftManagedDesktop = @{
             Type = "notManaged"
         }
