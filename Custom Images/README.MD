@@ -65,12 +65,15 @@ Let start by gathering the data in the following table, some of which will be th
 |imageTemplateName | w365-vs-template | The name of the Image Template to Create
 |aibGalleryName | igw365 | The name of the Image Gallery to create/update </br> NOTE; You cannot use special characters or spaces in this field.
 |imageDefinitionName | w365Images | The name of the image definition to create
+|galleryPublisherName | MyCompany | The publisher display name of the custom image.
 |provisioningPolicyDisplayName | W365 - Visual Studio Community 2022 | The name of your Windows 365 Provisioning Policy.
 |publisher | MicrosoftWindowsDesktop | (Optional) This value is set by default, but please do update to suit your needs, please see the **Image Option** section above
 |offerName | windows-ent-cpc | (Optional) This value is set by default, but please do update to suit your needs, please see the **Image Option** section above
 |offerSku | win11-22h2-ent-cpc-m365 | (Optional) This value is set by default, but please do update to suit your needs, please see the **Image Option** section above
 |runOutputName | w365DistResult | (Optional)
 
+<hr>
+</br>
 The easiest way to call the script it by using an Object to specify your values and then call the script as below;
 
 ```

@@ -18,6 +18,7 @@
         offerName = "windows-ent-cpc"
         offerSku = "win11-22h2-ent-cpc-m365"
         runOutputName = "w365DistResult" 
+        galleryPublisherName = "MyCompany"
     }
 
     & '.\Create-Windows365AIB.ps1' @Params
@@ -45,6 +46,9 @@ param (
     [Parameter(Mandatory = $true)]
     [String]
     $provisioningPolicyDisplayName,
+    [Parameter(Mandatory = $true)]
+    [string]
+    $galleryPublisherName,
     [string]
     $publisher = "MicrosoftWindowsDesktop",
     [String]
@@ -103,7 +107,7 @@ $GalleryParams = @{
     Name              = $imageDefinitionName
     OsState           = 'generalized'
     OsType            = 'Windows'
-    Publisher         = 'EUC365'
+    Publisher         = $galleryPublisherName
     Offer             = 'Windows'
     Sku               = 'CPC'
     HyperVGeneration  = "V2"
