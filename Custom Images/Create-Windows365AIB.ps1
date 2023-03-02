@@ -195,7 +195,6 @@ $ImgTemplateParams = @{
 New-AzImageBuilderTemplate @ImgTemplateParams | Out-Null
 "AIB Template Created"
 
-$runState = (Get-AzImageBuilderTemplate -ResourceGroupName $aibRG -Name $imageTemplateName).LastRunStatusRunState
 #Start the Image Building
 Start-AzImageBuilderTemplate -ResourceGroupName $aibRG -Name $imageTemplateName -AsJob
 #While the image is Running or In Progress, wait for 60 seconds and then check again.
