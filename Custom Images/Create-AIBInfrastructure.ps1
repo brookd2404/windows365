@@ -58,7 +58,13 @@ IF ((-Not((Get-AzContext).Subscription.id -match $subscriptionID))) {
 }
 
 #Register AIB Features if not registered (https://learn.microsoft.com/en-us/azure/virtual-machines/windows/image-builder-powershell#register-features)
-Get-AzResourceProvider -ProviderNamespace Microsoft.Compute, Microsoft.KeyVault, Microsoft.Storage, Microsoft.VirtualMachineImages, Microsoft.Network | Where-Object RegistrationState -ne Registered | Register-AzResourceProvider
+Get-AzResourceProvider -ProviderNamespace Microsoft.Compute, 
+                                        Microsoft.KeyVault, 
+                                        Microsoft.Storage, 
+                                        Microsoft.VirtualMachineImages, 
+                                        Microsoft.Network | 
+            Where-Object RegistrationState -ne Registered | 
+            Register-AzResourceProvider
 
 #If the resource group does not exist, create one
 IF (-Not(Get-AzResourceGroup -name $aibRG -ErrorAction SilentlyContinue)) {
