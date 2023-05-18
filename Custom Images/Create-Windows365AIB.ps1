@@ -13,7 +13,7 @@
         imageTemplateName = "w365-vs-template"
         aibGalleryName = 'elabcigw365'
         imageDefinitionName = 'w365Images'
-        provisioningPolicyDisplayName = "PSDayUK 2023 Demo"
+        provisioningPolicyDisplayName = "W365 Demo"
         publisher = "MicrosoftWindowsDesktop"
         offerName = "windows-ent-cpc"
         offerSku = "win11-22h2-ent-cpc-m365"
@@ -221,8 +221,8 @@ $latestImgVer = (Get-AzGalleryImageVersion `
 $diskConfig = New-AzDiskConfig `
     -Location $geoLocation `
     -CreateOption FromImage `
-    -GalleryImageReference @{Id = $latestImgVer.Id }
--HyperVGeneration V2
+    -GalleryImageReference @{Id = $latestImgVer.Id } `
+    -HyperVGeneration V2
 
 #Give the disk a name 
 $managedDiskName = "w365OSDisk$($latestImgVer.Name)"
