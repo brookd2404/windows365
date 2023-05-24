@@ -80,21 +80,27 @@ IF (-Not(Get-AzUserAssignedIdentity -ResourceGroupName $aibRG -Name $identityNam
 }
 
 IF (-Not(Get-AzRoleDefinition -Name $imageRoleDefName -ErrorAction SilentlyContinue)) {
-    #Assign permissions for the identity to distribute the images
-    $aibRoleImageCreationUrl = 'https://raw.githubusercontent.com/azure/azvmimagebuilder/master/solutions/12_Creating_AIB_Security_Roles/aibRoleImageCreation.json'
-    $aibRoleImageCreationPath = "$env:TEMP\aibRoleImageCreation.json"
-
-    Invoke-WebRequest -Uri $aibRoleImageCreationUrl -OutFile $aibRoleImageCreationPath -UseBasicParsing
-
-    $Content = Get-Content -Path $aibRoleImageCreationPath -Raw
-    $Content = $Content -replace '<subscriptionID>', $subscriptionID
-    $Content = $Content -replace '<rgName>', $aibRG
-    $Content = $Content -replace 'Azure Image Builder Service Image Creation Role', $imageRoleDefName
-    $Content | Out-File -FilePath $aibRoleImageCreationPath -Force
+    $ScopeDefinition = @{
+        "Name"             = $imageRoleDefName
+        "IsCustom"         = $true
+        "Description"      = "Image Builder access to create resources for the image build, you should delete or split out as appropriate"
+        "Actions"          = @(
+            "Microsoft.Compute/galleries/read",
+            "Microsoft.Compute/galleries/images/read",
+            "Microsoft.Compute/galleries/images/versions/read",
+            "Microsoft.Compute/galleries/images/versions/write",
+            "Microsoft.Compute/images/write",
+            "Microsoft.Compute/images/read",
+            "Microsoft.Compute/images/delete",
+            "Microsoft.ManagedIdentity/userAssignedIdentities/assign/action"
+        )
+        "AssignableScopes" = @(
+            "/subscriptions/$subscriptionID/resourceGroups/$aibRG"
+        )
+    }
 
     #Create the role definition
-    New-AzRoleDefinition -InputFile $aibRoleImageCreationPath
-
+    New-AzRoleDefinition -Role $ScopeDefinition
     "Azure Role Definition Created: $imageRoleDefName"
 }
 
