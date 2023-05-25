@@ -25,7 +25,7 @@ trigger:
     include:
     - Templates/Windows365.bicep
     - Parameters/Windows365.json
-    - azurepipeline.yaml
+    - CreateManagedImage.yaml
 pool:
   vmImage: 'windows-latest'
 

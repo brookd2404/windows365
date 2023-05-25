@@ -13,8 +13,6 @@ trigger:
       - main
   paths:
     include:
-    # - Templates/Windows365.bicep
-    # - Parameters/Windows365.json
     - DeployToW365.yaml
 pool:
   vmImage: 'windows-latest'
