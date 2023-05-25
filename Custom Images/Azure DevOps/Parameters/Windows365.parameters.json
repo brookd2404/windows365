@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imageTemplateName": {
+      "value": "W365BICEP",
+      "metadata": {
+        "description": "Name of the image template to be created"
+      }
+    },
+    "ImageOffer": {
+      "value": "windows-ent-cpc",
+      "metadata": {
+        "description": "Name of the image offer to be used"
+      }
+    },
+    "ImageSKU": {
+      "value": "win11-22h2-ent-cpc-m365",
+      "metadata": {
+        "description": "Name of the image SKU to be used"
+      }
+    },
+    "AIBVMSize": {
+      "value": "Standard_DS2_v2",
+      "metadata": {
+        "description": "Size of the VM to use while creating the gold image"
+      }
+    },
+    "AIBMSIName": {
+      "value": "w365-pipe-rg-UMI",
+      "metadata": {
+        "description": "Name of the Host Pool Managed Service Identity used to initiate the Azure Automation Runbooks"
+      }
+    },
+    "buildTimeout": {
+      "value": 240,
+      "metadata": {
+        "description": "Timeout in minutes for the image build process"
+      }
+    },
+    "osDiskSize": {
+      "value": 127,
+      "metadata": {
+        "description": "Size of the OS disk in GB"
+      }
+    }
+   }
+}
