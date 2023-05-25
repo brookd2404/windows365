@@ -1,0 +1,77 @@
+variables:
+  Connection: Windows 365 Service Connection #Azure DevOps Service Connector with access to subscription
+  subscriptionID: <SubID>
+  resourceGroup: <Resource Group Name>
+  imageTemplateName: Windows365CICD
+  location: "UK South"
+  template: Templates/Windows365.bicep
+  templateParameters: Parameters/Windows365.parameters.json
+
+# schedules:
+# - cron: "0 13 * * Sun" #1PM on a Sunday https://docs.microsoft.com/en-us/azure/devops/pipelines/process/scheduled-triggers?view=azure-devops&tabs=yaml#supported-cron-syntax
+#   displayName: Weekly Rebuild
+#   branches:
+#     include:
+#     - main
+#   always: true
+
+#Only trigger updates when the aib files have changed
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+  paths:
+    include:
+    - Templates/Windows365.bicep
+    - Parameters/Windows365.json
+    - azurepipeline.yaml
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- checkout: self
+  persistCredentials: true
+  clean: true
+
+#Install Required Modules
+- task: AzurePowerShell@5
+  displayName: 'Install Required PS Modules'
+  inputs:
+    azureSubscription: $(Connection)
+    ScriptPath: 'Resources/DeploymentActions.ps1'
+    ScriptArguments: '-InstallModules'
+    FailOnStandardError: true
+    azurePowerShellVersion: LatestVersion
+
+# Delete old AIB Setup
+- task: AzurePowerShell@5
+  displayName: 'Remove Existing AIB Template'
+  inputs:
+    azureSubscription: $(Connection)
+    ScriptPath: 'Resources/DeploymentActions.ps1'
+    ScriptArguments: '-RemoveAIBObject -ResourceGroupName "$(resourceGroup)" -imageTemplateName "$(imageTemplateName)-imgTemplate"'
+    FailOnStandardError: true
+    azurePowerShellVersion: LatestVersion
+
+#Run Template to generate AIB Setup
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Deploy Windows 365 Template'
+  inputs:
+    azureResourceManagerConnection: $(Connection)
+    subscriptionId: $(subscriptionID)
+    resourceGroupName: $(resourceGroup)
+    location: $(location)
+    csmFile: $(template)
+    csmParametersFile: $(templateParameters)
+    overrideParameters: '-imageTemplateName "$(imageTemplateName)"'
+
+#Generate the Managed Image
+- task: AzurePowerShell@5
+  displayName: 'Generate Managed Image'
+  inputs:
+    azureSubscription: $(Connection)
+    ScriptPath: 'Resources/DeploymentActions.ps1'
+    ScriptArguments: '-InvokeBuild -ResourceGroupName "$(resourceGroup)" -imageTemplateName "$(imageTemplateName)-imgTemplate"'
+    FailOnStandardError: true
+    azurePowerShellVersion: LatestVersion

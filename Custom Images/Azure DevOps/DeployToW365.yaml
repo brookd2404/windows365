@@ -1,0 +1,47 @@
+variables:
+  Connection: <DevOps Service Connection> #Azure DevOps Service Connector with access to subscription
+  subscriptionID: <SubID>
+  resourceGroup: <Resource Group Name>
+  imageTemplateName: Windows365CICD
+  location: "UK South"
+
+#Only trigger updates when the aib files have changed
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+  paths:
+    include:
+    # - Templates/Windows365.bicep
+    # - Parameters/Windows365.json
+    - DeployToW365.yaml
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- checkout: self
+  persistCredentials: true
+  clean: true
+
+#Install Required Modules
+- task: AzurePowerShell@5
+  displayName: 'Install Required PS Modules'
+  inputs:
+    azureSubscription: $(Connection)
+    ScriptPath: 'Resources/DeploymentActions.ps1'
+    ScriptArguments: '-InstallModules'
+    FailOnStandardError: true
+    azurePowerShellVersion: LatestVersion
+
+#Upload to Windows 365 & Configure Provisioning Policy
+- task: AzurePowerShell@5
+  displayName: 'Upload to Windows 365 & Configure Provisioning Policy'
+  env:
+    CLIENTSECRET: $(ClientSecret)
+  inputs:
+    azureSubscription: $(Connection)
+    ScriptPath: 'Resources/DeploymentActions.ps1'
+    ScriptArguments: '-ClientSecret $env:CLIENTSECRET -UploadW365 -ImageName $(imageTemplateName) -ResourceGroupName "$(resourceGroup)" -ConfigureProvisioningPolicy -provisioningPolicyDisplayName "CICD Policy"'
+    FailOnStandardError: true
+    azurePowerShellVersion: LatestVersion

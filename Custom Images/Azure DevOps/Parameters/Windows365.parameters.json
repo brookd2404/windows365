@@ -27,7 +27,7 @@
       }
     },
     "AIBMSIName": {
-      "value": "w365-pipe-rg-UMI",
+      "value": "<UMI Name>",
       "metadata": {
         "description": "Name of the Host Pool Managed Service Identity used to initiate the Azure Automation Runbooks"
       }
